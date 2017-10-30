@@ -52,6 +52,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Infrastructure\MemBusDispatcher.cs" />
+    <Compile Include="Infrastructure\PollingHook.cs" />
     <Compile Include="Model\Account.cs" />
     <Compile Include="Event\AccountClosedEvent.cs" />
     <Compile Include="Event\AccountCreatedEvent.cs" />

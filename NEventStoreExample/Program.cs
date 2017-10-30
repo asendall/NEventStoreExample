@@ -5,7 +5,7 @@ using MemBus;
 using MemBus.Configurators;
 using MemBus.Subscribing;
 using NEventStore;
-using NEventStore.Dispatcher;
+using NEventStore.Client;
 using NEventStoreExample.CommandHandler;
 using NEventStoreExample.EventHandler;
 using NEventStoreExample.Infrastructure;
@@ -16,7 +16,7 @@ namespace NEventStoreExample
     {
         private static readonly Guid AggregateId = Guid.NewGuid();
 
-        private static IStoreEvents store;
+        private static IStoreEvents _store;
 
         public static void Main(string[] args)
         {
@@ -28,10 +28,10 @@ namespace NEventStoreExample
                 }).Construct();
 
             var someAwesomeUi = new SomeAwesomeUi(bus);
-
-            using (store = WireupEventStore(bus))
+            var memBusDispatcher = new MemBusDispatcher(bus);
+            using (_store = WireupEventStore(bus))
             {
-                var repository = new EventStoreRepository(store, new AggregateFactory(), new ConflictDetector());
+                var repository = new EventStoreRepository(_store, new AggregateFactory(), new ConflictDetector());
 
                 var handler = new CreateAccountCommandHandler(repository);
                 var handler2 = new CloseAccountCommandHandler(repository);
@@ -40,24 +40,43 @@ namespace NEventStoreExample
                 bus.Subscribe(new KaChingNotifier());
                 bus.Subscribe(new OmgSadnessNotifier());
 
-                someAwesomeUi.CreateNewAccount(AggregateId, "Luiz", "@luizdamim");
-                someAwesomeUi.CloseAccount(AggregateId);               
+                var pollingClient = new PollingClient(_store.Advanced);
+                var commitObserver = pollingClient.ObserveFrom();
+                using (new PollingHook(commitObserver))
+                {
+                    using (commitObserver.Subscribe(memBusDispatcher))
+                    {
+                        commitObserver.Start();
+                        someAwesomeUi.CreateNewAccount(AggregateId, "Luiz", "@luizdamim");
+                        someAwesomeUi.CloseAccount(AggregateId);
+                        Console.ReadLine();
+                    }
+                }
+
             }
 
-            Console.ReadLine();
         }
 
         private static IStoreEvents WireupEventStore(IBus bus)
         {
             return Wireup.Init()
-                ////.LogToOutputWindow()
-                ////.LogToConsoleWindow()
                 .UsingInMemoryPersistence()
                     .UsingJsonSerialization()
-                        .Compress()
-                .UsingSynchronousDispatchScheduler()
-                .DispatchTo(new DelegateMessageDispatcher(c => DelegateDispatcher.DispatchCommit(bus, c)))
+                        .Compress()                     
                 .Build();
         }
+
+        //private static IStoreEvents WireupEventStore(IBus bus)
+        //{
+        //    return Wireup.Init()
+        //        ////.LogToOutputWindow()
+        //        ////.LogToConsoleWindow()
+        //        .UsingInMemoryPersistence()
+        //            .UsingJsonSerialization()
+        //                .Compress()                      
+        //        .UsingSynchronousDispatchScheduler()
+        //        .DispatchTo(new DelegateMessageDispatcher(c => DelegateDispatcher.DispatchCommit(bus, c)))
+        //        .Build();
+        //}
     }
 }
