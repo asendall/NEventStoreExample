@@ -34,9 +34,9 @@ namespace NEventStoreExample
                 }).Construct();
 
             var someAwesomeUi = new SomeAwesomeUi(bus);
-            using (_store = WireupEventStore(bus))
+            using (_store = WireupEventStore())
             {
-                using (_sagaStore = WireupEventStore(bus))
+                using (_sagaStore = WireupEventStore())
                 {
                     var repository = new EventStoreRepository(_store, new AggregateFactory(), new ConflictDetector());
                     var sagaRepository = new SagaEventStoreRepository(_sagaStore, new SagaFactory());
@@ -49,7 +49,7 @@ namespace NEventStoreExample
                     bus.Subscribe(new DebitAccountCommandHandler(repository));
                     bus.Subscribe(new KaChingNotifier());
                     bus.Subscribe(new OmgSadnessNotifier());
-                    bus.Subscribe(new TransactionProcessManager(sagaRepository, bus));
+                    bus.Subscribe(new TransactionProcessManager(sagaRepository));
                     bus.Subscribe(new TransactionNotifier());
                     bus.Subscribe(new CreditNotifier());
                     bus.Subscribe(new DebitNotifier());
@@ -63,7 +63,6 @@ namespace NEventStoreExample
                             {
                                 foreach (var @header in commit.Headers)
                                     bus.Publish(@header.Value);
-                                //Console.WriteLine("Message dispatched");
                             }
                             catch (Exception)
                             {
@@ -88,13 +87,11 @@ namespace NEventStoreExample
                                         {
                                             foreach (EventMessage @event in commit.Events)
                                                 bus.Publish(@event.Body);
-                                            //Console.WriteLine("Message dispatched");
                                         }
                                         catch (Exception)
                                         {
                                             Console.WriteLine("Unable to dispatch");
                                         }
-                                        //Console.WriteLine("Checkpoint token= " + commit.CheckpointToken);
                                         checkpointToken = commit.CheckpointToken;
                                     }))))
                                 {
@@ -131,7 +128,7 @@ namespace NEventStoreExample
             //Save checkpointValue to disk / whatever.
         }
 
-        private static IStoreEvents WireupEventStore(IBus bus)
+        private static IStoreEvents WireupEventStore()
         {
             return Wireup.Init()
                 .UsingInMemoryPersistence()

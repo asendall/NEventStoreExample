@@ -11,7 +11,7 @@ namespace NEventStoreExample.ProcessManagers
         IEventHandler<AccountDebitedEvent>
     {
 
-        public TransactionProcessManager(ISagaRepository repository, IBus bus) : base(repository, bus)
+        public TransactionProcessManager(ISagaRepository repository) : base(repository)
         {
         }
 
