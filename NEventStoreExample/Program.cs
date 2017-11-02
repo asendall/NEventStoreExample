@@ -34,66 +34,93 @@ namespace NEventStoreExample
                 }).Construct();
 
             var someAwesomeUi = new SomeAwesomeUi(bus);
-            using (_store = WireupEventStore(bus)) { 
-            using (_sagaStore = WireupEventStore(bus))
+            using (_store = WireupEventStore(bus))
             {
-                var repository = new EventStoreRepository(_store, new AggregateFactory(), new ConflictDetector());
-                var sagaRepository = new SagaEventStoreRepository(_sagaStore, new SagaFactory());
-
-                //register handlers
-                bus.Subscribe(new CreateAccountCommandHandler(repository));
-                bus.Subscribe(new CloseAccountCommandHandler(repository));
-                bus.Subscribe(new CreateTransactionCommandHandler(repository));
-                bus.Subscribe(new CreditAccountCommandHandler(repository));
-                bus.Subscribe(new DebitAccountCommandHandler(repository));
-                bus.Subscribe(new KaChingNotifier());
-                bus.Subscribe(new OmgSadnessNotifier());
-                bus.Subscribe(new TransactionProcessManager(sagaRepository, bus));
-                bus.Subscribe(new TransactionNotifier());
-                bus.Subscribe(new CreditNotifier());
-                bus.Subscribe(new DebitNotifier());
-
-
-
-                var client = new PollingClient(_store.Advanced);
-                var checkpointToken = LoadCheckpoint();
-
-                using (var observeCommits = client.ObserveFrom(checkpointToken))
-                using (observeCommits.Subscribe(new CommitObserver(new DelegateMessageDispatcher(commit =>
+                using (_sagaStore = WireupEventStore(bus))
                 {
-                    try
+                    var repository = new EventStoreRepository(_store, new AggregateFactory(), new ConflictDetector());
+                    var sagaRepository = new SagaEventStoreRepository(_sagaStore, new SagaFactory());
+
+                    //register handlers
+                    bus.Subscribe(new CreateAccountCommandHandler(repository));
+                    bus.Subscribe(new CloseAccountCommandHandler(repository));
+                    bus.Subscribe(new CreateTransactionCommandHandler(repository));
+                    bus.Subscribe(new CreditAccountCommandHandler(repository));
+                    bus.Subscribe(new DebitAccountCommandHandler(repository));
+                    bus.Subscribe(new KaChingNotifier());
+                    bus.Subscribe(new OmgSadnessNotifier());
+                    bus.Subscribe(new TransactionProcessManager(sagaRepository, bus));
+                    bus.Subscribe(new TransactionNotifier());
+                    bus.Subscribe(new CreditNotifier());
+                    bus.Subscribe(new DebitNotifier());
+
+                    var sagaClient = new PollingClient(_sagaStore.Advanced);
+                    using (var observeSagaCommits = sagaClient.ObserveFrom(null))
                     {
-                        foreach (EventMessage @event in commit.Events)
-                            bus.Publish(@event.Body);
-                        //Console.WriteLine("Message dispatched");
+                        using (observeSagaCommits.Subscribe(new CommitObserver(new DelegateMessageDispatcher(commit =>
+                        {
+                            try
+                            {
+                                foreach (var @header in commit.Headers)
+                                    bus.Publish(@header.Value);
+                                //Console.WriteLine("Message dispatched");
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("Unable to dispatch");
+                            }
+                        }))))
+                        {
+                            observeSagaCommits.Start();
+
+
+
+
+                            var client = new PollingClient(_store.Advanced);
+                            var checkpointToken = LoadCheckpoint();
+
+                            using (var observeCommits = client.ObserveFrom(checkpointToken))
+                            {
+                                using (
+                                    observeCommits.Subscribe(new CommitObserver(new DelegateMessageDispatcher(commit =>
+                                    {
+                                        try
+                                        {
+                                            foreach (EventMessage @event in commit.Events)
+                                                bus.Publish(@event.Body);
+                                            //Console.WriteLine("Message dispatched");
+                                        }
+                                        catch (Exception)
+                                        {
+                                            Console.WriteLine("Unable to dispatch");
+                                        }
+                                        //Console.WriteLine("Checkpoint token= " + commit.CheckpointToken);
+                                        checkpointToken = commit.CheckpointToken;
+                                    }))))
+                                {
+                                    observeCommits.Start();
+
+                                    //Do something
+                                    someAwesomeUi.CreateNewAccount(Account1Id, "Luiz", "@luizdamim");
+                                    someAwesomeUi.CreateNewAccount(Account2Id, "Andrew", "@asendall");
+                                    someAwesomeUi.CreateNewTransaction(CorrelationId, TransactionId, Account1Id,
+                                        Account2Id, 100);
+
+                                    Console.ReadKey();
+
+                                    SaveCheckpoint(checkpointToken);
+                                }
+                            }
+                        }
                     }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Unable to dispatch");
-                    }
-                    //Console.WriteLine("Checkpoint token= " + commit.CheckpointToken);
-                    checkpointToken = commit.CheckpointToken;
-                }))))
-                {
-                    observeCommits.Start();
-
-                    //Do something
-                    someAwesomeUi.CreateNewAccount(Account1Id, "Luiz", "@luizdamim");
-                    someAwesomeUi.CreateNewAccount(Account2Id, "Andrew", "@asendall");
-                    someAwesomeUi.CreateNewTransaction(CorrelationId, TransactionId, Account1Id, Account2Id, 100);
-
-                    Console.ReadKey();
-
-                    SaveCheckpoint(checkpointToken);
                 }
-
             }
         }
-    }
 
 
 
-        private static string LoadCheckpoint()
+        private static
+            string LoadCheckpoint()
         {
             // Load the checkpoint value from disk / local db/ etc
             return null;

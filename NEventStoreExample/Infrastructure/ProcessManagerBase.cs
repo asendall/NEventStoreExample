@@ -2,6 +2,8 @@
 using CommonDomain;
 using CommonDomain.Persistence;
 using MemBus;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
 
 namespace NEventStoreExample.Infrastructure
 {
@@ -19,11 +21,7 @@ namespace NEventStoreExample.Infrastructure
 
             ISaga saga = _repository.GetById<TSaga>(e.CorrelationId);
             saga.Transition(e);
-            var undispatchedMessages = saga.GetUndispatchedMessages();
-            foreach (var c in undispatchedMessages)
-            {
-                _bus.Publish(c);
-            }
+
             _repository.Save(saga, Guid.NewGuid(), null);
 
         }
