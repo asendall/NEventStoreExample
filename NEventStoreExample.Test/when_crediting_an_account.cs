@@ -8,29 +8,32 @@ using NUnit.Framework;
 
 namespace NEventStoreExample.Test
 {
+    
     [TestFixture]
-    public class when_closing_an_account : EventSpecification<CloseAccountCommand>
+    public class when_crediting_an_account : EventSpecification<CreditAccountCommand>
     {
+        private readonly Guid _correlationId = Guid.NewGuid();
         private readonly Guid accountId = Guid.NewGuid();
+        private decimal amount = 100;
 
         protected override IEnumerable<Infrastructure.Event> Given()
         {
             yield return new AccountCreatedEvent(accountId, "Luiz Damim", "@luizdamim", true);
         }
 
-        protected override CloseAccountCommand When()
+        protected override CreditAccountCommand When()
         {
-            return new CloseAccountCommand(accountId);
+            return new CreditAccountCommand(_correlationId, accountId, amount);
         }
 
-        protected override ICommandHandler<CloseAccountCommand> OnHandler()
+        protected override ICommandHandler<CreditAccountCommand> OnHandler()
         {
-            return new CloseAccountCommandHandler(Repository);
+            return new CreditAccountCommandHandler(Repository);
         }
 
         protected override IEnumerable<Infrastructure.Event> Expect()
         {
-            yield return new AccountClosedEvent(accountId);
+            yield return new AccountCreditedEvent(_correlationId, accountId, amount);
         }
     }
 }

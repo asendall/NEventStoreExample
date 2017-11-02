@@ -4,7 +4,6 @@ using System.Linq;
 using CommonDomain;
 using CommonDomain.Persistence;
 using NEventStore;
-using NEventStoreExample.Infrastructure;
 
 namespace NEventStoreExample.Test
 {
@@ -12,15 +11,15 @@ namespace NEventStoreExample.Test
     {
         private readonly IConstructAggregates aggregateFactory;
 
-        private readonly List<IEvent> givenEvents;
+        private readonly List<Infrastructure.Event> givenEvents;
 
-        public InMemoryEventRepository(List<IEvent> givenEvents, IConstructAggregates aggregateFactory)
+        public InMemoryEventRepository(List<Infrastructure.Event> givenEvents, IConstructAggregates aggregateFactory)
         {
             this.givenEvents = givenEvents;
             this.aggregateFactory = aggregateFactory;
         }
 
-        public List<IEvent> Events { get; private set; }
+        public List<Infrastructure.Event> Events { get; private set; }
 
         public TAggregate GetById<TAggregate>(Guid id) where TAggregate : class, IAggregate
         {
@@ -52,7 +51,7 @@ namespace NEventStoreExample.Test
 
         public void Save(string bucketId, IAggregate aggregate, Guid commitId, Action<IDictionary<string, object>> updateHeaders)
         {
-            Events = aggregate.GetUncommittedEvents().Cast<IEvent>().ToList();
+            Events = aggregate.GetUncommittedEvents().Cast<Infrastructure.Event>().ToList();
         }
 
         public void Dispose()

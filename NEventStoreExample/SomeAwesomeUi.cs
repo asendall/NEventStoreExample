@@ -24,5 +24,11 @@ namespace NEventStoreExample
             var closeCommand = new CloseAccountCommand(accountId);
             bus.Publish(closeCommand);
         }
+
+        public void CreateNewTransaction(Guid correlationId, Guid transactionId, Guid accountToCreditId, Guid accountToDebitId, decimal amount )
+        {
+            var createTransactionCommand = new CreateTransactionCommand(correlationId,transactionId,accountToCreditId,accountToDebitId,amount);
+            bus.Publish(createTransactionCommand);
+        }
     }
 }

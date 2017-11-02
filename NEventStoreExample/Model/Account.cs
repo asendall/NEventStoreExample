@@ -30,9 +30,21 @@ namespace NEventStoreExample.Model
 
         public bool IsActive { get; private set; }
 
+        public decimal Balance { get; private set; }
+
         public void Close()
         {
-            RaiseEvent(new AccountClosedEvent());
+            RaiseEvent(new AccountClosedEvent(Id.Value));
+        }
+
+        public void Credit(Guid correlationId, decimal amount)
+        {
+            RaiseEvent(new AccountCreditedEvent(correlationId, Id.Value, amount));
+        }
+
+        public void Debit(Guid correlationId, decimal amount)
+        {
+            RaiseEvent(new AccountDebitedEvent(correlationId, Id.Value, amount));
         }
 
         private void Apply(AccountCreatedEvent @event)
@@ -46,6 +58,16 @@ namespace NEventStoreExample.Model
         private void Apply(AccountClosedEvent e)
         {
             IsActive = false;
+        }
+
+        private void Apply(AccountCreditedEvent e)
+        {
+            Balance += e.Amount;
+        }
+
+        private void Apply(AccountDebitedEvent e)
+        {
+            Balance -= e.Amount;
         }
     }
 }

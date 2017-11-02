@@ -4,7 +4,7 @@ using NEventStoreExample.Infrastructure;
 namespace NEventStoreExample.Command
 {
     // A command doesn't need to carry state if you don't want it to... Here, we're just telling it the account id to close.
-    public class CloseAccountCommand : ICommand
+    public class CloseAccountCommand : Infrastructure.Command
     {
         public CloseAccountCommand(Guid accountId)
         {

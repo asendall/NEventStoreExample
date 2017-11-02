@@ -43,6 +43,10 @@
       <HintPath>..\packages\NEventStore.5.2.0\lib\net40\NEventStore.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Stateless, Version=4.0.0.0, Culture=neutral, PublicKeyToken=93038f0927583c9a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Stateless.4.0.0\lib\net45\Stateless.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,8 +56,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Infrastructure\MemBusDispatcher.cs" />
+    <Compile Include="CommandHandler\CreateTransactionCommandHandler.cs" />
+    <Compile Include="CommandHandler\CreditAccountCommandHandler.cs" />
+    <Compile Include="CommandHandler\DebitAccountCommandHandler.cs" />
+    <Compile Include="Command\CreateTransactionCommand.cs" />
+    <Compile Include="Command\CreditAccountCommand.cs" />
+    <Compile Include="Command\DebitAccountCommand.cs" />
+    <Compile Include="EventHandler\DebitNotifier.cs" />
+    <Compile Include="EventHandler\CreditNotifier.cs" />
+    <Compile Include="EventHandler\TransactionNotifier.cs" />
+    <Compile Include="ProcessManagers\TransactionProcessManager.cs" />
+    <Compile Include="Event\AccountCreditedEvent.cs" />
+    <Compile Include="Event\AccountDebitedEvent.cs" />
+    <Compile Include="Event\TransactionCreatedEvent.cs" />
+    <Compile Include="Infrastructure\IMessage.cs" />
+    <Compile Include="Infrastructure\CommitObserver.cs" />
     <Compile Include="Infrastructure\PollingHook.cs" />
+    <Compile Include="Infrastructure\ProcessManagerBase.cs" />
+    <Compile Include="Infrastructure\SagaFactory.cs" />
     <Compile Include="Model\Account.cs" />
     <Compile Include="Event\AccountClosedEvent.cs" />
     <Compile Include="Event\AccountCreatedEvent.cs" />
@@ -66,14 +86,18 @@
     <Compile Include="CommandHandler\CreateAccountCommandHandler.cs" />
     <Compile Include="CommandHandler\CloseAccountCommandHandler.cs" />
     <Compile Include="Infrastructure\DelegateDispatcher.cs" />
-    <Compile Include="Infrastructure\ICommand.cs" />
+    <Compile Include="Infrastructure\Command.cs" />
     <Compile Include="Infrastructure\ICommandHandler.cs" />
-    <Compile Include="Infrastructure\IEvent.cs" />
+    <Compile Include="Infrastructure\Event.cs" />
     <Compile Include="Infrastructure\IEventHandler.cs" />
     <Compile Include="EventHandler\KaChingNotifier.cs" />
     <Compile Include="EventHandler\OmgSadnessNotifier.cs" />
+    <Compile Include="Model\Transaction.cs" />
+    <Compile Include="Model\CorrelationId.cs" />
+    <Compile Include="Model\TransactionId.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Saga\TransactionSaga.cs" />
     <Compile Include="SomeAwesomeUi.cs" />
   </ItemGroup>
   <ItemGroup>

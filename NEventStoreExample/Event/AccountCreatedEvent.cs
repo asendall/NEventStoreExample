@@ -8,7 +8,7 @@ namespace NEventStoreExample.Event
     // Once we save our uncommitted events to EventStore, then that AccountCreatedEvent is also
     // sent out to our bus for other interested parties.
     [Serializable]
-    public class AccountCreatedEvent : IEvent
+    public class AccountCreatedEvent : Infrastructure.Event
     {
         public AccountCreatedEvent(Guid id, string name, string twitter, bool isActive)
         {
